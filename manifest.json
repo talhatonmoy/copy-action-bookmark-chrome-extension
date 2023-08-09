@@ -2,7 +2,7 @@
 {
   "manifest_version": 3,
   "name": "Link Saver Extension",
-  "version": "1.0",
+  "version": "2.0",
   "permissions": ["tabs", "clipboardRead", "storage"],
   "background": {
     "service_worker": "background.js"

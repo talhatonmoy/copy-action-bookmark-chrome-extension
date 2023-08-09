@@ -30,16 +30,6 @@ function saveData() {
 
 
 
-function renderArray(allLinks) {
-  let html = '';
-  if (allLinks) {
-    allLinks.forEach((link, index) => {
-      const itemNumber = index + 1;
-      html += `<li class="mb-2">${itemNumber}. <a href="${link.url}">${link.label}</a></li>`
-      ol.innerHTML = html
-    })
-  }
-}
 
 
 
@@ -52,6 +42,7 @@ function display() {
 
 }
 
+// Capturing Currently active tab url
 tabBtn.addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     const activeTab = tabs[0].url;
@@ -90,22 +81,40 @@ clearBtn.addEventListener('click', function () {
 })
 
 
+// Exporting urls
+exportBtn.addEventListener('click', downloadCSV);
+function downloadCSV() {
+  const rawdata = JSON.parse(localStorage.getItem('storedData'))
+  const newData = toCSV(rawdata);
+  donloadTrigger(newData)
+}
+
+
+
+
+/**
+ * Helping Functions
+ */
+
+// Rendering array
+function renderArray(allLinks) {
+  let html = '';
+  if (allLinks) {
+    allLinks.forEach((link, index) => {
+      const itemNumber = index + 1;
+      html += `<li class="mb-2">${itemNumber}. <a href="${link.url}">${link.label}</a></li>`
+      ol.innerHTML = html
+    })
+  }
+}
+
 // Convert to csv
 function toCSV(data) {
   const rows = data.map((item) => Object.values(item).map((value) => `"${value}"`).join(','))
   return [...rows].join('\n')
 }
 
-// Extracting Json Data from stringyfy Json string
-function extractJsonData(inputString) {
-  const startIndex = inputString.indexOf('\'') + 1;
-  const endIndex = inputString.lastIndexOf('\'');
-  const arrOfObjects = inputString.substring(startIndex, endIndex);
-
-  // return JSON.parse(arrOfObjects);
-  return arrOfObjects;
-}
-
+// Download Trigger
 function donloadTrigger(csvData) {
   // Create a Blob from the CSV data
   const blob = new Blob([csvData], { type: 'text/csv' });
@@ -124,12 +133,3 @@ function donloadTrigger(csvData) {
   // Clean up by revoking the Blob URL
   URL.revokeObjectURL(blobUrl);
 }
-
-// Exporting urls
-exportBtn.addEventListener('click', downloadCSV);
-function downloadCSV() {
-  const rawdata = JSON.parse(localStorage.getItem('storedData'))
-  const newData = toCSV(rawdata);
-  donloadTrigger(newData)
-}
-
