@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@extend-chrome/clipboard": "^2.0.0",
     "json-2-csv": "^4.1.0"
   }
 }

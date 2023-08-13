@@ -8,32 +8,19 @@ const tabBtn = document.getElementById('tab')
 const exportBtn = document.getElementById('export')
 const ptag = document.getElementById('dummy')
 
-addBtn.addEventListener('click', saveData);
 
 // Retrieve existing data from local storage if available
 let storedData = JSON.parse(localStorage.getItem('storedData')) || [];
-function saveData() {
-  let dataObj = {
-    url: inputUrl.value,
-    label: inputLabel.value
-  };
 
-  storedData.push(dataObj);
-
-  const textToWrite = JSON.stringify(storedData);
-  inputUrl.value = '';
-  inputLabel.value = '';
-
-  localStorage.setItem('storedData', textToWrite);
-  console.log('Data added/updated in local storage:', storedData);
+// Add New Data
+addBtn.addEventListener('click', addData);
+function addData() {
+  saveData(inputUrl.value, inputLabel.value);
 }
 
 
 
-
-
-
-
+// Display Function
 setInterval(display, 500)
 function display() {
   let allLinksFromStorage = localStorage.getItem('storedData')
@@ -55,17 +42,7 @@ tabBtn.addEventListener('click', () => {
       domainName = 'Dummy'
     }
 
-    dataObj = {
-      url: activeTab,
-      label: domainName
-    }
-    storedData.push(dataObj);
-
-    const textToWrite = JSON.stringify(storedData);
-    inputUrl.value = '';
-    inputLabel.value = '';
-
-    localStorage.setItem('storedData', textToWrite);
+    saveData(activeTab, domainName)
 
   })
 })
@@ -86,7 +63,7 @@ exportBtn.addEventListener('click', downloadCSV);
 function downloadCSV() {
   const rawdata = JSON.parse(localStorage.getItem('storedData'))
   const newData = toCSV(rawdata);
-  donloadTrigger(newData)
+  downloadTrigger(newData)
 }
 
 
@@ -114,8 +91,15 @@ function toCSV(data) {
   return [...rows].join('\n')
 }
 
+// Function to check if a given string is a URL
+function isURL(text) {
+  const urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+  return urlPattern.test(text);
+}
+
+
 // Download Trigger
-function donloadTrigger(csvData) {
+function downloadTrigger(csvData) {
   // Create a Blob from the CSV data
   const blob = new Blob([csvData], { type: 'text/csv' });
 
@@ -133,3 +117,57 @@ function donloadTrigger(csvData) {
   // Clean up by revoking the Blob URL
   URL.revokeObjectURL(blobUrl);
 }
+
+/**
+ * Save Data To Local Storge
+ */
+function saveData(link, label) {
+  let dataObj = {
+    url: link,
+    label: label
+  };
+
+  storedData.push(dataObj);
+
+  const textToWrite = JSON.stringify(storedData);
+  inputUrl.value = '';
+  inputLabel.value = '';
+
+  localStorage.setItem('storedData', textToWrite);
+}
+
+
+/**
+ * Development tools 
+ */
+function printData(data) {
+  if (data) {
+    ptag.innerHTML = data;
+  } else {
+    ptag.innerHTML = "No Data Found"
+  }
+}
+
+/**
+ * Getting Copied url and save to local storage
+ */
+chrome.storage.local.get(["key"]).then((result) => {
+  console.log("Value currently is " + result.key);
+  const url = result.key;
+  let firstName = ''
+  if (url.includes("www.linkedin.com")) {
+    const regex = /https:\/\/www\.linkedin\.com\/in\/(\w+)/;
+    const matches = url.match(regex);
+
+    if (matches && matches.length > 1) {
+      firstName = matches[1];
+    } else {
+      console.log("No match found.");
+    }
+  } else {
+    console.log("URL does not contain www.linkedin.com");
+  }
+
+  saveData(url, firstName)
+
+});
