@@ -7,6 +7,7 @@ const clearBtn = document.getElementById('clear')
 const tabBtn = document.getElementById('tab')
 const exportBtn = document.getElementById('export')
 const ptag = document.getElementById('dummy')
+const toalItemsSpan = document.getElementById('totalItems')
 
 
 // Retrieve existing data from local storage if available
@@ -18,18 +19,7 @@ function addData() {
   saveData(inputUrl.value, inputLabel.value);
 }
 
-
-
-// Display Function
-setInterval(display, 500)
-function display() {
-  let allLinksFromStorage = localStorage.getItem('storedData')
-  let allLinks = JSON.parse(allLinksFromStorage);
-  renderArray(allLinks)
-
-}
-
-// Capturing Currently active tab url
+// Adding Currently active tab url
 tabBtn.addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     const activeTab = tabs[0].url;
@@ -47,14 +37,57 @@ tabBtn.addEventListener('click', () => {
   })
 })
 
+//Getting Copied url and save to local storage
+chrome.storage.local.get(["key"]).then((result) => {
+
+  const url = result.key;
+  let firstName = ''
+  if (url) {
+    if (url.includes("www.linkedin.com")) {
+      const regex = /https:\/\/www\.linkedin\.com\/in\/(\w+)/;
+      const matches = url.match(regex);
+
+      if (matches && matches.length > 1) {
+        firstName = matches[1];
+      }
+    } else {
+      firstName = url.substring(0, 35);
+      if (url.length > 35) {
+        firstName += "...";
+      }
+    }
+  }
+
+  saveData(url, firstName)
+  // chrome.storage.local.clear();
+
+
+}).then(() => {
+  chrome.storage.local.clear();
+});
+
+
+
+
+// Display Function
+setInterval(display, 500)
+function display() {
+  let allLinksFromStorage = localStorage.getItem('storedData')
+  let allLinks = JSON.parse(allLinksFromStorage);
+  renderArray(allLinks)
+
+}
+
 
 // Clear storage
 clearBtn.addEventListener('click', function () {
   const confirmation = confirm('Do you want to clear all data?')
   if (confirmation) {
-    localStorage.removeItem('storedData');
+    // localStorage.removeItem('storedData');
+    localStorage.clear();
   }
   ol.innerHTML = '<p>Nothing Found</p>'
+  toalItemsSpan.innerHTML = 0
 })
 
 
@@ -77,11 +110,13 @@ function downloadCSV() {
 function renderArray(allLinks) {
   let html = '';
   if (allLinks) {
+    const totalItems = allLinks.length
     allLinks.forEach((link, index) => {
-      const itemNumber = index + 1;
+      const itemNumber = index + 1
       html += `<li class="mb-2">${itemNumber}. <a href="${link.url}">${link.label}</a></li>`
       ol.innerHTML = html
     })
+    toalItemsSpan.innerHTML = totalItems
   }
 }
 
@@ -122,18 +157,24 @@ function downloadTrigger(csvData) {
  * Save Data To Local Storge
  */
 function saveData(link, label) {
-  let dataObj = {
-    url: link,
-    label: label
-  };
 
-  storedData.push(dataObj);
+  if (link && label) {
+    let dataObj = {
+      url: link,
+      label: label
+    };
 
-  const textToWrite = JSON.stringify(storedData);
-  inputUrl.value = '';
-  inputLabel.value = '';
+    if (!isDataStored(dataObj)) {
+      storedData.push(dataObj);
 
-  localStorage.setItem('storedData', textToWrite);
+      const textToWrite = JSON.stringify(storedData);
+      inputUrl.value = '';
+      inputLabel.value = '';
+
+      localStorage.setItem('storedData', textToWrite);
+    }
+  }
+
 }
 
 
@@ -148,26 +189,7 @@ function printData(data) {
   }
 }
 
-/**
- * Getting Copied url and save to local storage
- */
-chrome.storage.local.get(["key"]).then((result) => {
-  console.log("Value currently is " + result.key);
-  const url = result.key;
-  let firstName = ''
-  if (url.includes("www.linkedin.com")) {
-    const regex = /https:\/\/www\.linkedin\.com\/in\/(\w+)/;
-    const matches = url.match(regex);
-
-    if (matches && matches.length > 1) {
-      firstName = matches[1];
-    } else {
-      console.log("No match found.");
-    }
-  } else {
-    console.log("URL does not contain www.linkedin.com");
-  }
-
-  saveData(url, firstName)
-
-});
+// Check if the same data is already stored in the array
+function isDataStored(newData) {
+  return storedData.some(item => item.url === newData.url && item.label === newData.label);
+}

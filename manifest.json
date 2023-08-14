@@ -1,9 +1,10 @@
 
 {
   "manifest_version": 3,
-  "name": "Link Saver Extension",
-  "version": "2.0",
-  "permissions": ["tabs", "clipboardRead","clipboardWrite", "activeTab", "scripting", "storage"],
+  "name": "Bookmark 2 CSV",
+  "description": "This chrome extension is developed to save necessary links and export them to a csv file with a single click",
+  "version": "2.1",
+  "permissions": ["tabs", "clipboardRead","clipboardWrite", "activeTab", "storage"],
   "background": {
     "service_worker": "background.js"
   },
